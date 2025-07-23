@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap");
+
+:root {
+  --primary-bg: #0e1111;
+  --secondary-bg: #1c1f26;
+  --accent-color: #c0ff00; /* Lime Green */
+  --text-light: #ffffff;
+  --text-muted: #a0a0a0;
+  --border-color: #2c2f36;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-light);
+}
+
+a {
+  text-decoration: none;
+  color: var(--accent-color);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #e0ff70;
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.select-button {
+  border: 1px solid var(--accent-color);
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--accent-color);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.select-button:hover,
+.select-button.selected {
+  background-color: var(--accent-color);
+  color: var(--primary-bg);
+  font-weight: 700;
+}
+
+.chart-container {
+  background-color: var(--secondary-bg);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.loader {
+  color: var(--accent-color);
+  text-align: center;
+  padding: 2rem;
+}
+
+.header-title {
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+
+input {
+  background-color: var(--secondary-bg);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}

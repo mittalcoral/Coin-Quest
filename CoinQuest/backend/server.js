@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import watchlistRoutes from "./routes/watchlist.js";
+import coinRoutes from "./routes/coins.js";
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,7 @@ mongoose
   .catch((err) => console.error(" MongoDB Error:", err.message));
 
 // Routes
+app.use("/api/coins", coinRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 

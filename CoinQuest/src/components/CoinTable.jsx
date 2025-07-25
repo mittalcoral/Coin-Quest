@@ -34,11 +34,17 @@ export default function CoinTable() {
   const { token, watchlist, setWatchlist, api } = useAuth();
 
   const fetchCoins = async () => {
+  try {
     setLoading(true);
-    const { data } = await axios.get(CoinList(currency));
+    const { data } = await axios.get(`http://localhost:5000/api/coins?currency=${currency}`);
     setCoins(data);
+  } catch (error) {
+    console.error("Error fetching coins:", error);
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   useEffect(() => {
     fetchCoins();

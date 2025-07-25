@@ -13,7 +13,7 @@ const Carousel = () => {
   const { currency, symbol } = CryptoState();
 
   const fetchTrendingCoins = async () => {
-    const { data } = await axios.get(TrendingCoins(currency));
+    const { data } = await axios.get(`http://localhost:5000/api/coins?currency=${currency}`);
     setTrending(data);
   };
 

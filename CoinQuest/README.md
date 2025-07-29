@@ -31,6 +31,7 @@
 - 🚀 Express.js
 - 🗄 MongoDB + Mongoose (for storing user data and watchlist)
 - 🔐 JWT Authentication
+- 🔌 Socket.io
 
 ---
 

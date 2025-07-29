@@ -1,25 +1,27 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import AliceCarousel from "react-alice-carousel";
 import "react-alice-carousel/lib/alice-carousel.css";
 import { Link } from "react-router-dom";
-import { TrendingCoins } from "../../config/api";
 import { CryptoState } from "../../CryptoContext";
 import { numberWithCommas } from "../../utils/format";
 import { Typography } from "@mui/material";
+import { useAuth } from "../../AuthContext";
 
 const Carousel = () => {
   const [trending, setTrending] = useState([]);
-  const { currency, symbol } = CryptoState();
-
-  const fetchTrendingCoins = async () => {
-    const { data } = await axios.get(`http://localhost:5000/api/coins?currency=${currency}`);
-    setTrending(data);
-  };
+  const { symbol } = CryptoState();
+  const { socket } = useAuth();
 
   useEffect(() => {
-    fetchTrendingCoins();
-  }, [currency]);
+    if (!socket) return;
+
+    socket.on("coinData", (data) => {
+      console.log("Received coinData for Carousel");
+      setTrending(data.slice(0, 10));
+    });
+
+    return () => socket.off("coinData");
+  }, [socket]);
 
   const items = trending.map((coin) => {
     const profit = coin?.price_change_percentage_24h >= 0;
@@ -32,18 +34,12 @@ const Carousel = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
           textDecoration: "none",
           color: "white",
           margin: "10px",
         }}
       >
-        <img
-          src={coin?.image}
-          alt={coin.name}
-          height="50"
-          style={{ marginBottom: 10 }}
-        />
+        <img src={coin?.image} alt={coin.name} height="50" style={{ marginBottom: 10 }} />
         <Typography variant="body2" style={{ fontWeight: 500 }}>
           {coin?.symbol.toUpperCase()} &nbsp;
           <span style={{ color: profit ? "limegreen" : "red" }}>

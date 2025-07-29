@@ -1,86 +1,75 @@
-import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
-import {jwtDecode} from "jwt-decode";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { io } from "socket.io-client";
 
 const AuthContext = createContext();
 
-const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-});
-
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-const safeParse = (value) => {
-  try {
-    if (value && value !== "undefined") return JSON.parse(value);
-    return null;
-  } catch {
-    return null;
-  }
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => safeParse(localStorage.getItem("user")));
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [watchlist, setWatchlist] = useState([]);
+  const [socket, setSocket] = useState(null);
 
-  // Fetch watchlist on token change
-  useEffect(() => {
+  const api = axios.create({
+    baseURL: "http://localhost:5000/api",
+  });
+
+  api.interceptors.request.use((config) => {
     if (token) {
-      api
-        .get("/watchlist")
-        .then((res) => {
-          setWatchlist(Array.isArray(res.data) ? res.data : []);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch watchlist:", err);
-          setWatchlist([]);
-        });
-    } else {
-      setWatchlist([]);
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  }, [token]);
+    return config;
+  });
 
-  const login = (data) => {
-    console.log("login() called with:", data);
-    let userData = null;
-
-    if (data.user) {
-      userData = data.user;
-    } else if (data.token) {
-      try {
-        userData = jwtDecode(data.token); // Decode JWT payload
-      } catch (e) {
-        console.error("JWT decode failed:", e);
-      }
+  const fetchWatchlist = async () => {
+    if (!token) return;
+    try {
+      const { data } = await api.get("/watchlist");
+      setWatchlist(data);
+    } catch (err) {
+      console.error("Failed to fetch watchlist:", err);
+      if (err.response?.status === 401) logout();
     }
+  };
 
-    setUser(userData);
+  const login = async (email, password) => {
+    const { data } = await api.post("/auth/login", { email, password });
     setToken(data.token);
-    localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("token", data.token);
-
-    console.log("User set to:", userData);
+    setUser(data.user);
+    fetchWatchlist();
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
     setWatchlist([]);
-    localStorage.removeItem("user");
     localStorage.removeItem("token");
   };
 
+  
+  useEffect(() => {
+    const newSocket = io("http://localhost:5000", {
+      transports: ["websocket"],
+    });
+    setSocket(newSocket);
+
+    newSocket.on("connect", () => {
+      console.log("Connected to socket:", newSocket.id);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (token) fetchWatchlist();
+  }, [token]);
+
   return (
     <AuthContext.Provider
-      value={{ user, token, login, logout, watchlist, setWatchlist, api }}
+      value={{ user, token, watchlist, login, logout, socket }}
     >
       {children}
     </AuthContext.Provider>

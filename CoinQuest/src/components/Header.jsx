@@ -16,8 +16,6 @@ function Header() {
   const { currency, setCurrency } = CryptoState();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
-  console.log("Header sees user:", user);
 
   return (
     <AppBar
@@ -130,4 +128,4 @@ function Header() {
   );
 }
 
-export default Header
+export default Header;

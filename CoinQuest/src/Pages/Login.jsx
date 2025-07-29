@@ -10,23 +10,24 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-      });
+ const handleLogin = async (e) => {
+  e.preventDefault();
 
-      console.log("API Response:", data);
-      login(data); // ✅ Calls AuthContext login
-      alert("Login Successful!");
-      navigate("/");
-    } catch (error) {
-      console.error("Login Error:", error.response?.data || error.message);
-      alert("Login Failed");
-    }
-  };
+  if (!email || !password) {
+    alert("Please enter both email and password");
+    return;
+  }
+
+  const success = await login(email, password);
+  if (success) {
+    alert("Login Successful!");
+    navigate("/");
+  } else {
+    alert("Invalid email or password");
+  }
+};
+
+
 
   return (
     <Container

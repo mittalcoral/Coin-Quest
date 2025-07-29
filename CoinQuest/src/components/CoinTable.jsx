@@ -15,40 +15,32 @@ import {
 } from "@mui/material";
 import Pagination from "@mui/material/Pagination";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { CoinList } from "../config/api.js";
 import { useNavigate } from "react-router-dom";
 import { CryptoState } from "../CryptoContext";
 import { useAuth } from "../AuthContext";
 import { numberWithCommas } from "../utils/format";
 
-
 export default function CoinTable() {
   const [coins, setCoins] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const { currency, symbol } = CryptoState();
+  const { symbol } = CryptoState();
   const navigate = useNavigate();
-  const { token, watchlist, setWatchlist, api } = useAuth();
-
-  const fetchCoins = async () => {
-  try {
-    setLoading(true);
-    const { data } = await axios.get(`http://localhost:5000/api/coins?currency=${currency}`);
-    setCoins(data);
-  } catch (error) {
-    console.error("Error fetching coins:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  const { token, watchlist, socket } = useAuth();
 
   useEffect(() => {
-    fetchCoins();
-  }, [currency]);
+    if (!socket) return;
+
+    socket.on("coinData", (data) => {
+      console.log(" Received coinData for Table");
+      setCoins(data);
+      setLoading(false);
+    });
+
+    return () => socket.off("coinData");
+  }, [socket]);
 
   const handleSearch = () =>
     coins.filter(
@@ -57,41 +49,10 @@ export default function CoinTable() {
         coin.symbol.toLowerCase().includes(search.toLowerCase())
     );
 
-  //  Add to Watchlist
-  const addToWatchlist = async (coinId) => {
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
-    try {
-      const { data } = await api.post("/watchlist/add", { coinId });
-      setWatchlist(data); 
-    } catch (error) {
-      console.error("Error adding to watchlist:", error.response?.data || error.message);
-    }
-  };
-
-  //  Remove from Watchlist
-  const removeFromWatchlist = async (coinId) => {
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
-    try {
-      const { data } = await api.post("/watchlist/remove", { coinId });
-      setWatchlist(data);
-    } catch (error) {
-      console.error("Error removing from watchlist:", error.response?.data || error.message);
-    }
-  };
-
   return (
     <Container sx={{ textAlign: "center" }}>
-      <Typography
-        variant="h4"
-        sx={{ margin: 3, fontFamily: "Montserrat", color: "lime" }}
-      >
-        Cryptocurrency Prices by Market Cap
+      <Typography variant="h4" sx={{ margin: 3, fontFamily: "Montserrat", color: "lime" }}>
+        Live Cryptocurrency Prices by Market Cap
       </Typography>
 
       <TextField
@@ -114,21 +75,15 @@ export default function CoinTable() {
           <Table>
             <TableHead sx={{ backgroundColor: "limegreen" }}>
               <TableRow>
-                {["Coin", "Price", "24h Change", "Market Cap", "Action"].map(
-                  (head) => (
-                    <TableCell
-                      key={head}
-                      align={head === "Coin" ? "left" : "right"}
-                      sx={{
-                        color: "black",
-                        fontWeight: 700,
-                        fontFamily: "Montserrat",
-                      }}
-                    >
-                      {head}
-                    </TableCell>
-                  )
-                )}
+                {["Coin", "Price", "24h Change", "Market Cap"].map((head) => (
+                  <TableCell
+                    key={head}
+                    align={head === "Coin" ? "left" : "right"}
+                    sx={{ color: "black", fontWeight: 700, fontFamily: "Montserrat" }}
+                  >
+                    {head}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -148,31 +103,22 @@ export default function CoinTable() {
                       <TableCell
                         component="th"
                         scope="row"
-                        sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                        sx={{ display: "flex", gap: 2, alignItems: "center", cursor: "pointer" }}
                         onClick={() => navigate(`/coins/${row.id}`)}
                       >
-                        <img
-                          src={row?.image}
-                          alt={row.name}
-                          height="50"
-                          style={{ marginBottom: 10 }}
-                        />
+                        <img src={row?.image} alt={row.name} height="50" style={{ marginBottom: 10 }} />
                         <Box display="flex" flexDirection="column">
-                          <span
-                            style={{
-                              textTransform: "uppercase",
-                              fontSize: 22,
-                              color: "lime",
-                            }}
-                          >
+                          <span style={{ textTransform: "uppercase", fontSize: 22, color: "lime" }}>
                             {row.symbol}
                           </span>
                           <span style={{ color: "darkgrey" }}>{row.name}</span>
                         </Box>
                       </TableCell>
+
                       <TableCell align="right" sx={{ color: "lime" }}>
                         {symbol} {numberWithCommas(row.current_price.toFixed(2))}
                       </TableCell>
+
                       <TableCell
                         align="right"
                         sx={{
@@ -183,48 +129,9 @@ export default function CoinTable() {
                         {profit && "+"}
                         {row.price_change_percentage_24h.toFixed(2)}%
                       </TableCell>
+
                       <TableCell align="right" sx={{ color: "lime" }}>
-                        {symbol}{" "}
-                        {numberWithCommas(row.market_cap.toString().slice(0, -6))}M
-                      </TableCell>
-                      <TableCell align="right">
-                        {watchlist.includes(row.id) ? (
-                          <Button
-                            variant="contained"
-                            onClick={() => removeFromWatchlist(row.id)}
-                            sx={{
-                              backgroundColor: "red",
-                              color: "white",
-                              fontWeight: "bold",
-                              "&:hover": { backgroundColor: "#cc0000" },
-                              paddingX: 2,
-                              paddingY: 1,
-                              borderRadius: "8px",
-                              fontSize: "14px",
-                              textTransform: "none",
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="contained"
-                            onClick={() => addToWatchlist(row.id)}
-                            sx={{
-                              backgroundColor: "limegreen",
-                              color: "black",
-                              fontWeight: "bold",
-                              "&:hover": { backgroundColor: "#32cd32" },
-                              paddingX: 2,
-                              paddingY: 1,
-                              borderRadius: "8px",
-                              fontSize: "14px",
-                              textTransform: "none",
-                            }}
-                          >
-                            + Watchlist
-                          </Button>
-                        )}
+                        {symbol} {numberWithCommas(row.market_cap.toString().slice(0, -6))}M
                       </TableCell>
                     </TableRow>
                   );

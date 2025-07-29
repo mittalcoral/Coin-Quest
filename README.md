@@ -13,7 +13,7 @@
 - ✅ **User Authentication** – Login and manage watchlist
 - 📋 **Watchlist Feature** – Add/remove coins to track your favorites
 - 🌓 **Dark Neon Theme** – Black background with lime green accents
-- 🔄 **Currency Toggle** – View prices in multiple currencies (USD, INR, etc.)
+- 🔄 **Currency Toggle** – View prices in multiple currencies (USD and INR)
 
 ---
 
